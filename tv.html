@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>⚽ LIVE TV — Nonton Bola</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0a0e14;color:#c8d1d9;min-height:100vh}
+.header{background:#11161d;border-bottom:1px solid #1c2333;padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.header h1{font-size:16px;color:#fff}
+.header .dot{width:8px;height:8px;background:#26c753;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.player{width:100%;background:#000;position:relative}
+.player video{width:100%;display:block;max-height:35vh;background:#000}
+.player .placeholder{display:flex;align-items:center;justify-content:center;height:35vh;font-size:40px;color:#2a3a5c}
+.channels{padding:10px 12px}
+.channel-list{display:flex;flex-direction:column;gap:6px}
+.channel{background:#11161d;border:1px solid #1c2333;border-radius:8px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .15s}
+.channel:hover{border-color:#2997ff;background:#141b27}
+.channel.active{border-color:#26c753;background:#0d1f14}
+.channel .ch-icon{width:36px;height:36px;background:#1c2333;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.channel.active .ch-icon{background:#26c753;color:#fff}
+.channel .ch-info{flex:1;min-width:0}
+.channel .ch-name{color:#fff;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.channel .ch-detail{color:#5c6672;font-size:11px;margin-top:2px}
+.channel .ch-status{font-size:10px;padding:2px 6px;border-radius:4px}
+.ch-status.live{background:#26c75322;color:#26c753}
+.ch-status.test{background:#f0883e22;color:#f0883e}
+footer{text-align:center;padding:20px;color:#5c6672;font-size:11px}
+.loading{text-align:center;padding:40px;color:#5c6672}
+.controls{display:flex;gap:8px;padding:8px 12px;background:#11161d;border-top:1px solid #1c2333}
+.control-btn{flex:1;padding:8px;border:1px solid #1c2333;border-radius:6px;background:#0a0e14;color:#c8d1d9;font-size:12px;cursor:pointer;text-align:center}
+.control-btn:hover{border-color:#2997ff}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="dot"></div>
+  <h1>⚽ LIVE TV — Nonton Bola</h1>
+</div>
+
+<div class="player" id="player">
+  <video id="video" controls playsinline></video>
+  <div class="placeholder" id="placeholder">📺</div>
+</div>
+
+<div class="controls">
+  <button class="control-btn" onclick="changeChannel(-1)">◀ Prev</button>
+  <button class="control-btn" onclick="toggleFullscreen()">⛶ Full</button>
+  <button class="control-btn" onclick="changeChannel(1)">Next ▶</button>
+</div>
+
+<div class="channels">
+  <div class="channel-list" id="channelList">
+    <div class="loading">⏳ Loading channels...</div>
+  </div>
+</div>
+
+<footer>
+  Live streams dari iptv-org · Buka Chrome/Laptop utk hasil terbaik<br>
+  Kalo blank — channel lagi offline, coba channel lain
+</footer>
+
+<script>
+// ⚡ CHANNEL LIST — pilih yang sering online
+const channels = [
+  { name: "FIFA+ English ⚽🏆", icon: "🏆", url: "https://d2w9q46ikgrcwx.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-of5cbk3sav3w5/v1/sysdata_s_p_a_fifa_7/samsungheadend_us/latest/main/hls/playlist.m3u8", type: "hls", status: "live" },
+  { name: "FIFA+ Español", icon: "🇪🇸", url: "https://37b4c228.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWZyX0ZJRkFQbHVzRnJlbmNoX0hMUw/playlist.m3u8", type: "hls", status: "live" },
+  { name: "FIFA+ German", icon: "🇩🇪", url: "https://4397879b.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWRlX0ZJRkFQbHVzR2VybWFuX0hMUw/playlist.m3u8", type: "hls", status: "live" },
+  { name: "beIN SPORTS XTRA", icon: "⚽", url: "https://bein-xtra-bein.amagi.tv/playlist.m3u8", type: "hls", status: "live" },
+  { name: "beIN SPORTS Español", icon: "🇪🇸", url: "https://dc1644a9jazgj.cloudfront.net/beIN_Sports_Xtra_Espanol.m3u8", type: "hls", status: "live" },
+  { name: "ESPN The Ocho", icon: "🏈", url: "https://d3b6q2ou5kp8ke.cloudfront.net/ESPNTheOcho.m3u8", type: "hls", status: "live" },
+  { name: "ESPN Deportes", icon: "🇲🇽", url: "http://origin.thetvapp.to/hls/espn-deportes/mono.m3u8", type: "hls", status: "test" },
+  { name: "FOX Sports 1", icon: "🦊", url: "https://foxsports-linear.sinclair.wurl.com/manifest/playlist.m3u8", type: "hls", status: "live" },
+  { name: "FOX Sports 2", icon: "🦊", url: "https://foxsports2-linear.sinclair.wurl.com/manifest/playlist.m3u8", type: "hls", status: "live" },
+  { name: "DAZN Combat", icon: "🥊", url: "https://dazn-combat-rakuten.amagi.tv/hls/amagi_hls_data_rakutenAA-dazn-combat-rakuten/CDN/master.m3u8", type: "hls", status: "live" },
+  { name: "Stadium", icon: "🏟️", url: "https://d2rwndlut9ey6l.cloudfront.net/stadium-247/playlist.m3u8", type: "hls", status: "test" },
+  { name: "Bloomberg TV", icon: "📊", url: "https://cdn-videos.akamaized.net/btv/desktop/akamai/us/live/primary.m3u8", type: "hls", status: "live" },
+  { name: "NASA TV", icon: "🚀", url: "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8", type: "hls", status: "live" },
+  { name: "Earthcam Live", icon: "🌍", url: "https://video3.earthcam.com/fecnetwork/9974.flv/chunklist_w1389216371.m3u8", type: "hls", status: "test" },
+  { name: "TRT World", icon: "🇹🇷", url: "https://tv-trtworld.live.trt.com.tr/master.m3u8", type: "hls", status: "live" },
+  { name: "Al Jazeera English", icon: "🌐", url: "https://live-hls-web-aje.getaj.net/AJE/index.m3u8", type: "hls", status: "live" },
+  { name: "DW English", icon: "🇩🇪", url: "https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8", type: "hls", status: "live" },
+  { name: "France 24", icon: "🇫🇷", url: "https://static.france24.com/live/F24_EN_HI_HLS/live_web.m3u8", type: "hls", status: "live" },
+  { name: "Euronews", icon: "🇪🇺", url: "https://rakuten-euronews-2-eu.rakuten.wurl.tv/playlist.m3u8", type: "hls", status: "live" },
+];
+
+let currentChannel = 0;
+let hls = null;
+const video = document.getElementById('video');
+const placeholder = document.getElementById('placeholder');
+
+function playChannel(index) {
+  if (index < 0) index = channels.length - 1;
+  if (index >= channels.length) index = 0;
+  currentChannel = index;
+  
+  const ch = channels[index];
+  
+  // Cleanup
+  if (hls) { hls.destroy(); hls = null; }
+  video.src = '';
+  video.style.display = 'none';
+  placeholder.style.display = 'flex';
+  
+  // Update UI
+  document.querySelectorAll('.channel').forEach((el, i) => {
+    el.classList.toggle('active', i === index);
+  });
+  
+  // Play
+  try {
+    if (Hls.isSupported() && (ch.url.endsWith('.m3u8') || ch.type === 'hls')) {
+      hls = new Hls({ lowLatencyMode: true });
+      hls.loadSource(ch.url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().then(() => {
+          video.style.display = 'block';
+          placeholder.style.display = 'none';
+        }).catch(() => {});
+      });
+      hls.on(Hls.Events.ERROR, () => {
+        placeholder.textContent = '⚠️';
+        placeholder.style.display = 'flex';
+        video.style.display = 'none';
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = ch.url;
+      video.play().then(() => {
+        video.style.display = 'block';
+        placeholder.style.display = 'none';
+      }).catch(() => {});
+    } else {
+      placeholder.textContent = '❌';
+    }
+  } catch(e) {
+    placeholder.textContent = '❌';
+  }
+}
+
+function changeChannel(dir) {
+  playChannel(currentChannel + dir);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    video.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+// Build channel list
+const list = document.getElementById('channelList');
+list.innerHTML = channels.map((ch, i) => `
+  <div class="channel" onclick="playChannel(${i})" id="ch-${i}">
+    <div class="ch-icon">${ch.icon}</div>
+    <div class="ch-info">
+      <div class="ch-name">${ch.name}</div>
+      <div class="ch-detail">Streaming Live</div>
+    </div>
+    <div class="ch-status ${ch.status}">${ch.status === 'live' ? '🔴 LIVE' : '🟡 TEST'}</div>
+  </div>
+`).join('');
+
+// Auto play first channel
+setTimeout(() => playChannel(0), 500);
+</script>
+</body>
+</html>
